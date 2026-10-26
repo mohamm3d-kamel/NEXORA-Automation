@@ -13,6 +13,7 @@ from pages.driver_page import DriverPage
 from pages.process_management_page import ProcessManagementPage
 from pages.accounting_page import AccountingPage
 from pages.sla_page import SlaPage
+from pages.reports_page import ReportsPage
 
 @pytest.fixture(scope="session")
 def browser_type_launch_args(browser_type_launch_args: Dict[str, Any]):
@@ -139,6 +140,11 @@ def sla_page(page: Page) -> SlaPage:
     return SlaPage(page)
 
 @pytest.fixture
+def reports_page(page: Page) -> ReportsPage:
+    """Fixture to provide an initialized ReportsPage instance."""
+    return ReportsPage(page)
+
+@pytest.fixture
 def proof_file_path() -> str:
     """Path to the dummy proof asset for cash transfer submissions."""
     asset_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "assets", "dummy_proof.png"))
@@ -187,6 +193,14 @@ def authenticated_sla(page: Page, login_page: LoginPage, sla_page: SlaPage) -> S
     login_page.login(settings.TEST_USER_EMAIL, settings.TEST_USER_PASSWORD)
     sla_page.open_rules("order")
     return sla_page
+
+@pytest.fixture
+def authenticated_reports(page: Page, login_page: LoginPage, reports_page: ReportsPage) -> ReportsPage:
+    """Fixture that completes admin login and opens Shipment Reports."""
+    login_page.open()
+    login_page.login(settings.TEST_USER_EMAIL, settings.TEST_USER_PASSWORD)
+    reports_page.open_shipment_reports()
+    return reports_page
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):

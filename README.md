@@ -34,7 +34,8 @@ NEXORA-Automation/
 │   ├── driver_page.py           # Driver active pickups, Today's Manifest, deliver/fail modals
 │   ├── process_management_page.py # Process Management warehouse scanning & dispatch
 │   ├── accounting_page.py       # Accounting, COD Collection, Manifest Closure & Cash Transfer
-│   └── sla_page.py              # Service Level Agreement (Rules, Tracking, Rematch)
+│   ├── sla_page.py              # Service Level Agreement (Rules, Tracking, Rematch)
+│   └── reports_page.py          # Reports (Shipment, Performance, Finance, Query Builder, Export)
 │
 ├── tests/                       # Pytest test suites
 │   ├── __init__.py
@@ -48,7 +49,8 @@ NEXORA-Automation/
 │   ├── test_driver_actions.py   # Driver accept/reject and pickup progression tests
 │   ├── test_driver_delivery.py  # Driver order delivery, failure recording & FDR tests
 │   ├── test_finance_accounting_cod.py # Finance & Accounting COD collection, closure & cash transfer tests
-│   └── test_sla.py              # SLA module rules, tracking, rematch & validation tests
+│   ├── test_sla.py              # SLA module rules, tracking, rematch & validation tests
+│   └── test_reports.py          # Reports module generation, preview, export & format tests
 │
 ├── utils/                       # Common helpers and constants
 │   ├── __init__.py
@@ -170,6 +172,9 @@ pytest -m finance
 # Run SLA (Service Level Agreement) tests only
 pytest -m sla
 
+# Run Reports module tests only
+pytest -m reports
+
 # Run authentication/login tests only
 pytest -m login
 
@@ -207,6 +212,7 @@ pytest tests/test_driver_actions.py
 pytest tests/test_driver_delivery.py
 pytest tests/test_finance_accounting_cod.py
 pytest tests/test_sla.py
+pytest tests/test_reports.py
 ```
 
 ---
@@ -221,7 +227,7 @@ pytest tests/test_sla.py
 
 ---
 
-## 🧩 Test Coverage Details (55 Automated Tests)
+## 🧩 Test Coverage Details (67 Automated Tests)
 
 | Module | Test Case | Description | Marker |
 |---|---|---|---|
@@ -283,3 +289,15 @@ pytest tests/test_sla.py
 | `test_sla.py` | `test_edge_order_sla_search_filtering` | Verifies search filtering with matching query, empty state for non-existent query & clear search | `edge`, `sla` |
 | `test_sla.py` | `test_edge_order_sla_cancel_wizard_preserves_state` | Verifies opening wizard, entering draft name, and clicking Cancel leaves table count unchanged | `edge`, `sla` |
 | `test_sla.py` | `test_edge_order_sla_cancel_delete_modal` | Verifies clicking delete icon and then Cancel (No) in modal preserves the rule | `edge`, `sla` |
+| `test_reports.py` | `test_valid_navigate_all_report_sections` | Validates loading and header schemas across Shipment, Performance, and Finance reports | `valid`, `reports` |
+| `test_reports.py` | `test_valid_report_tab_switching_via_ui` | Switches between Shipment, Performance, and Finance reports via UI tabs and verifies URLs | `valid`, `reports` |
+| `test_reports.py` | `test_valid_shipment_report_run_preview` | Runs report query preview via API 201/200 and validates preview table rows render | `valid`, `reports` |
+| `test_reports.py` | `test_valid_shipment_report_export_pdf_and_verify_list` | Dispatches PDF export, navigates back to list, and verifies new PDF report with Completed status | `valid`, `reports` |
+| `test_reports.py` | `test_valid_shipment_report_export_excel_and_download` | Dispatches Excel export, clicks download, and validates captured `.xlsx` file | `valid`, `reports` |
+| `test_reports.py` | `test_valid_reports_format_filter` | Filters reports list by PDF and Excel formats, asserting rows match selected format | `valid`, `reports` |
+| `test_reports.py` | `test_invalid_driver_performance_missing_dates_validation` | Asserts date range validation errors on Driver Performance preview without dates | `invalid`, `reports` |
+| `test_reports.py` | `test_invalid_cod_collection_missing_dates_validation` | Asserts date range validation errors on COD Collection preview without dates | `invalid`, `reports` |
+| `test_reports.py` | `test_invalid_driver_performance_export_missing_dates_validation` | Asserts date range validation errors on Driver Performance export attempt | `invalid`, `reports` |
+| `test_reports.py` | `test_edge_shipment_report_column_toggling` | Toggles column inclusion switches in report builder and verifies preview runs cleanly | `edge`, `reports` |
+| `test_reports.py` | `test_edge_report_create_back_navigation_preserves_list` | Verifies back navigation from builder preserves reports list and count | `edge`, `reports` |
+| `test_reports.py` | `test_edge_empty_state_on_unmatched_format` | Verifies graceful rendering of empty placeholder on empty report views | `edge`, `reports` |

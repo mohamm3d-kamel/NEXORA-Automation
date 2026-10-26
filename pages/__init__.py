@@ -9,6 +9,7 @@ from pages.driver_page import DriverPage
 from pages.process_management_page import ProcessManagementPage
 from pages.accounting_page import AccountingPage
 from pages.sla_page import SlaPage
+from pages.reports_page import ReportsPage
 
 __all__ = [
     "BasePage",
@@ -21,4 +22,5 @@ __all__ = [
     "ProcessManagementPage",
     "AccountingPage",
     "SlaPage",
+    "ReportsPage",
 ]
