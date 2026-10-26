@@ -10,6 +10,7 @@ from pages.process_management_page import ProcessManagementPage
 from pages.accounting_page import AccountingPage
 from pages.sla_page import SlaPage
 from pages.reports_page import ReportsPage
+from pages.manifests_page import ManifestsPage
 
 __all__ = [
     "BasePage",
@@ -23,4 +24,5 @@ __all__ = [
     "AccountingPage",
     "SlaPage",
     "ReportsPage",
+    "ManifestsPage",
 ]

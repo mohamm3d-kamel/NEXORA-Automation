@@ -35,7 +35,8 @@ NEXORA-Automation/
 │   ├── process_management_page.py # Process Management warehouse scanning & dispatch
 │   ├── accounting_page.py       # Accounting, COD Collection, Manifest Closure & Cash Transfer
 │   ├── sla_page.py              # Service Level Agreement (Rules, Tracking, Rematch)
-│   └── reports_page.py          # Reports (Shipment, Performance, Finance, Query Builder, Export)
+│   ├── reports_page.py          # Reports (Shipment, Performance, Finance, Query Builder, Export)
+│   └── manifests_page.py        # Delivery & Pickup Manifests, Intra-Hub, Return & Pickups page objects
 │
 ├── tests/                       # Pytest test suites
 │   ├── __init__.py
@@ -50,7 +51,8 @@ NEXORA-Automation/
 │   ├── test_driver_delivery.py  # Driver order delivery, failure recording & FDR tests
 │   ├── test_finance_accounting_cod.py # Finance & Accounting COD collection, closure & cash transfer tests
 │   ├── test_sla.py              # SLA module rules, tracking, rematch & validation tests
-│   └── test_reports.py          # Reports module generation, preview, export & format tests
+│   ├── test_reports.py          # Reports module generation, preview, export & format tests
+│   └── test_manifests.py        # Delivery & Pickup Manifests, detail view, export & validation tests
 │
 ├── utils/                       # Common helpers and constants
 │   ├── __init__.py
@@ -175,6 +177,9 @@ pytest -m sla
 # Run Reports module tests only
 pytest -m reports
 
+# Run Manifests (Delivery & Pickups) tests only
+pytest -m manifests
+
 # Run authentication/login tests only
 pytest -m login
 
@@ -213,6 +218,7 @@ pytest tests/test_driver_delivery.py
 pytest tests/test_finance_accounting_cod.py
 pytest tests/test_sla.py
 pytest tests/test_reports.py
+pytest tests/test_manifests.py
 ```
 
 ---
@@ -227,7 +233,7 @@ pytest tests/test_reports.py
 
 ---
 
-## 🧩 Test Coverage Details (67 Automated Tests)
+## 🧩 Test Coverage Details (84 Automated Tests)
 
 | Module | Test Case | Description | Marker |
 |---|---|---|---|
@@ -301,3 +307,17 @@ pytest tests/test_reports.py
 | `test_reports.py` | `test_edge_shipment_report_column_toggling` | Toggles column inclusion switches in report builder and verifies preview runs cleanly | `edge`, `reports` |
 | `test_reports.py` | `test_edge_report_create_back_navigation_preserves_list` | Verifies back navigation from builder preserves reports list and count | `edge`, `reports` |
 | `test_reports.py` | `test_edge_empty_state_on_unmatched_format` | Verifies graceful rendering of empty placeholder on empty report views | `edge`, `reports` |
+| `test_manifests.py` | `test_valid_navigate_all_manifest_tabs` | Validates loading, correct routes and header schemas across all 4 manifest tabs (Delivery, Ready for Delivery, IntraHub, Returns) | `smoke`, `valid`, `manifests` |
+| `test_manifests.py` | `test_valid_delivery_manifests_table_data` | Verifies Delivery Manifests table contains data rows with `DM-` identifiers and valid statuses | `smoke`, `valid`, `manifests` |
+| `test_manifests.py` | `test_valid_delivery_manifest_detail_view_and_shipments` | Opens delivery manifest detail view, asserts manifest metadata card, status, and shipments table | `smoke`, `valid`, `manifests` |
+| `test_manifests.py` | `test_valid_delivery_manifest_export_excel` | Dispatches Excel export from manifest detail view, asserts `.xlsx` download and filename format | `regression`, `valid`, `manifests` |
+| `test_manifests.py` | `test_valid_ready_for_delivery_manifest_detail_and_back` | Opens Ready for Delivery (`RFD-`), verifies detail view and returns safely using Back button | `regression`, `valid`, `manifests` |
+| `test_manifests.py` | `test_valid_admin_pickups_table_headers_and_search` | Verifies Admin Pickups headers and executes search by `PICK-` prefix | `regression`, `valid`, `manifests` |
+| `test_manifests.py` | `test_valid_pickup_detail_view_inspection` | Clicks pickup ID from list, verifies URL transitions with `pickupId` and detail elements render | `regression`, `valid`, `manifests` |
+| `test_manifests.py` | `test_valid_pickup_driver_assigned_reflection` | Verifies Pickups table displays assigned driver and recognized lifecycle status | `regression`, `valid`, `manifests` |
+| `test_manifests.py` | `test_invalid_intra_hub_manifest_missing_required_fields` | Asserts validation errors (`Branch is required`, etc.) when advancing wizard without fields | `regression`, `invalid`, `manifests` |
+| `test_manifests.py` | `test_invalid_return_manifest_missing_required_fields` | Asserts validation errors (`Branch is required`, etc.) on Return Manifest wizard without fields | `regression`, `invalid`, `manifests` |
+| `test_manifests.py` | `test_invalid_search_nonexistent_manifest` | Searches for nonexistent manifest ID and asserts table displays `No Data` empty state with 0 rows | `regression`, `invalid`, `manifests` |
+| `test_manifests.py` | `test_edge_rapid_tab_switching_preserves_stability` | Rapidly switches across all 4 manifest tabs, asserting UI stability and clean final rendering | `regression`, `edge`, `manifests` |
+| `test_manifests.py` | `test_edge_delivery_manifest_print_button_interaction` | Verifies Print button on manifest detail view is enabled and clickable without unhandled errors | `regression`, `edge`, `manifests` |
+| `test_manifests.py` | `test_edge_pickups_search_nonexistent_handles_empty_state` | Searches for nonexistent pickup identifier and asserts clean empty state handling | `regression`, `edge`, `manifests` |
