@@ -33,7 +33,8 @@ NEXORA-Automation/
 │   ├── pickups_admin_page.py    # Tenant Admin pickups list & driver assignment
 │   ├── driver_page.py           # Driver active pickups, Today's Manifest, deliver/fail modals
 │   ├── process_management_page.py # Process Management warehouse scanning & dispatch
-│   └── accounting_page.py       # Accounting, COD Collection, Manifest Closure & Cash Transfer
+│   ├── accounting_page.py       # Accounting, COD Collection, Manifest Closure & Cash Transfer
+│   └── sla_page.py              # Service Level Agreement (Rules, Tracking, Rematch)
 │
 ├── tests/                       # Pytest test suites
 │   ├── __init__.py
@@ -46,7 +47,8 @@ NEXORA-Automation/
 │   ├── test_merchant_lifecycle.py # End-to-end Merchant -> Admin -> Driver lifecycle tests
 │   ├── test_driver_actions.py   # Driver accept/reject and pickup progression tests
 │   ├── test_driver_delivery.py  # Driver order delivery, failure recording & FDR tests
-│   └── test_finance_accounting_cod.py # Finance & Accounting COD collection, closure & cash transfer tests
+│   ├── test_finance_accounting_cod.py # Finance & Accounting COD collection, closure & cash transfer tests
+│   └── test_sla.py              # SLA module rules, tracking, rematch & validation tests
 │
 ├── utils/                       # Common helpers and constants
 │   ├── __init__.py
@@ -165,6 +167,9 @@ pytest -m regression
 pytest -m accounting
 pytest -m finance
 
+# Run SLA (Service Level Agreement) tests only
+pytest -m sla
+
 # Run authentication/login tests only
 pytest -m login
 
@@ -201,6 +206,7 @@ pytest tests/test_merchant_lifecycle.py
 pytest tests/test_driver_actions.py
 pytest tests/test_driver_delivery.py
 pytest tests/test_finance_accounting_cod.py
+pytest tests/test_sla.py
 ```
 
 ---
@@ -215,7 +221,7 @@ pytest tests/test_finance_accounting_cod.py
 
 ---
 
-## 🧩 Test Coverage Details (42 Automated Tests)
+## 🧩 Test Coverage Details (55 Automated Tests)
 
 | Module | Test Case | Description | Marker |
 |---|---|---|---|
@@ -264,3 +270,16 @@ pytest tests/test_finance_accounting_cod.py
 | `test_finance_accounting_cod.py` | `test_edge_hub_branch_filtering_isolation` | Verifies branch / hub dependency: selecting Hub filter cards (`Main Branch`, `Dammam Branch`, etc.) strictly isolates records by manifest branch | `regression`, `finance`, `accounting` |
 | `test_finance_accounting_cod.py` | `test_edge_multiple_cod_batch_transfer_calculation` | Asserts selecting multiple COD checkboxes dynamically calculates and aggregates total amount in modal summary | `regression`, `finance`, `accounting` |
 | `test_finance_accounting_cod.py` | `test_edge_completed_cod_collection_audit_details` | Audits Completed COD Collection tab headers and verifies standard settlement ID format (`COD-YYMMDD-XXXX`) | `regression`, `finance`, `accounting` |
+| `test_sla.py` | `test_valid_navigate_all_sla_rules_views` | Validates loading and header schemas for all 3 SLA Rules sections (Order, FDR, Ticket) | `valid`, `sla` |
+| `test_sla.py` | `test_valid_navigate_all_sla_tracking_views` | Validates loading and column schemas for all 3 SLA Tracking sections (Order, FDR, Ticket) | `valid`, `sla` |
+| `test_sla.py` | `test_valid_sla_tab_switching_via_ui` | Switches Rules/Tracking tabs and Order/FDR/Ticket subtabs via UI buttons and verifies URLs | `valid`, `sla` |
+| `test_sla.py` | `test_valid_create_order_sla_rule` | Creates full Order SLA Rule across 3-step wizard, verifies table entry with ACTIVE status & cleans up | `valid`, `sla` |
+| `test_sla.py` | `test_valid_order_sla_tracking_rematch` | Triggers 'Rematch Rules' on Order SLA Tracking and verifies 202/200 API response | `valid`, `sla` |
+| `test_sla.py` | `test_invalid_order_sla_empty_step1_validation` | Asserts 'This field is required' error when clicking Next on Step 1 with empty Rule Name | `invalid`, `sla` |
+| `test_sla.py` | `test_invalid_order_sla_empty_step2_route_validation` | Asserts 4 route validation errors when clicking Next on Step 2 without route details | `invalid`, `sla` |
+| `test_sla.py` | `test_invalid_order_sla_empty_step3_hours_validation` | Asserts 'This field is required' error when attempting to Save on Step 3 with empty transit hours | `invalid`, `sla` |
+| `test_sla.py` | `test_invalid_fdr_sla_empty_role_validation` | Asserts 'This field is required' error when advancing FDR SLA wizard without Role | `invalid`, `sla` |
+| `test_sla.py` | `test_invalid_ticket_sla_empty_reason_validation` | Asserts 'Reason is required' error when advancing Ticket SLA wizard without Reason | `invalid`, `sla` |
+| `test_sla.py` | `test_edge_order_sla_search_filtering` | Verifies search filtering with matching query, empty state for non-existent query & clear search | `edge`, `sla` |
+| `test_sla.py` | `test_edge_order_sla_cancel_wizard_preserves_state` | Verifies opening wizard, entering draft name, and clicking Cancel leaves table count unchanged | `edge`, `sla` |
+| `test_sla.py` | `test_edge_order_sla_cancel_delete_modal` | Verifies clicking delete icon and then Cancel (No) in modal preserves the rule | `edge`, `sla` |

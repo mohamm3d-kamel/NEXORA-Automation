@@ -8,6 +8,7 @@ from pages.pickups_admin_page import PickupsAdminPage
 from pages.driver_page import DriverPage
 from pages.process_management_page import ProcessManagementPage
 from pages.accounting_page import AccountingPage
+from pages.sla_page import SlaPage
 
 __all__ = [
     "BasePage",
@@ -19,4 +20,5 @@ __all__ = [
     "DriverPage",
     "ProcessManagementPage",
     "AccountingPage",
+    "SlaPage",
 ]
