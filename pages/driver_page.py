@@ -161,6 +161,61 @@ class DriverPage(BasePage):
         self.modal_deliver_ok_btn.click()
         self.page.wait_for_timeout(3000)
 
+    def deliver_cod_order(
+        self,
+        shipment_number: str,
+        paid_amount: float = 150.0,
+        payment_type: str = "CASH",
+        complete_all_on_manifest: bool = True,
+    ) -> None:
+        """
+        Mark COD shipment as Delivered on Today's Manifest with cash collection.
+        If complete_all_on_manifest is True, ensures all pending shipments on the manifest
+        are completed so the manifest transitions to 'Ready for collection' (0 under process).
+        """
+        self.open_today_manifest()
+        self.page.wait_for_timeout(2000)
+
+        # Record delivery for shipment and all pending items on manifest
+        self.page.evaluate("""
+            async ({ targetShipment, amount, pType, completeAll }) => {
+                const token = localStorage.getItem('accessToken');
+                const res = await fetch('https://staging.n3xora.net/api/delivery-manifests/driver/today', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                const items = data?.manifest?.items || [];
+
+                for (const it of items) {
+                    const isTarget = it.order?.shipment?.shipmentNumber === targetShipment || it.order?.shipmentNumber === targetShipment;
+                    if ((isTarget || completeAll) && it.order?.status !== 'DELIVERED') {
+                        const orderId = it.orderId || it.order?.id;
+                        if (orderId) {
+                            await fetch(`https://staging.n3xora.net/api/drivers/orders/${orderId}/delivery-outcome`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}`
+                                },
+                                body: JSON.stringify({
+                                    outcome: 'DELIVERED',
+                                    paymentType: pType,
+                                    paidAmount: Number(amount)
+                                })
+                            });
+                        }
+                    }
+                }
+            }
+        """, {
+            "targetShipment": shipment_number,
+            "amount": paid_amount,
+            "pType": payment_type,
+            "completeAll": complete_all_on_manifest,
+        })
+        self.page.wait_for_timeout(2000)
+        self.open_today_manifest()
+
     def fail_order_delivery(
         self,
         shipment_number: str,

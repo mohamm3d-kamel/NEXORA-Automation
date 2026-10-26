@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 from typing import Dict, Any, Callable
 import pytest
 from playwright.sync_api import Page, Browser, BrowserContext
@@ -10,6 +11,7 @@ from pages.merchant_page import MerchantPage
 from pages.pickups_admin_page import PickupsAdminPage
 from pages.driver_page import DriverPage
 from pages.process_management_page import ProcessManagementPage
+from pages.accounting_page import AccountingPage
 
 @pytest.fixture(scope="session")
 def browser_type_launch_args(browser_type_launch_args: Dict[str, Any]):
@@ -126,6 +128,21 @@ def process_management_page(page: Page) -> ProcessManagementPage:
     return ProcessManagementPage(page)
 
 @pytest.fixture
+def accounting_page(page: Page) -> AccountingPage:
+    """Fixture to provide an initialized AccountingPage instance."""
+    return AccountingPage(page)
+
+@pytest.fixture
+def proof_file_path() -> str:
+    """Path to the dummy proof asset for cash transfer submissions."""
+    asset_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "assets", "dummy_proof.png"))
+    if not os.path.exists(asset_path):
+        os.makedirs(os.path.dirname(asset_path), exist_ok=True)
+        with open(asset_path, "wb") as f:
+            f.write(b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15c4\x00\x00\x00\rIDATx\x9cc`\x00\x00\x00\x02\x00\x01H\xaf\xa4q\x00\x00\x00\x00IEND\xaeB`\x82')
+    return asset_path
+
+@pytest.fixture
 def authenticated_merchant(page: Page, login_page: LoginPage, merchant_page: MerchantPage) -> MerchantPage:
     """Fixture that logs in as B2C Merchant and yields MerchantPage."""
     login_page.open()
@@ -148,6 +165,14 @@ def authenticated_dashboard(page: Page, login_page: LoginPage, dashboard_page: D
     login_page.login(settings.TEST_USER_EMAIL, settings.TEST_USER_PASSWORD)
     dashboard_page.wait_until_loaded()
     return dashboard_page
+
+@pytest.fixture
+def authenticated_accounting(page: Page, login_page: LoginPage, accounting_page: AccountingPage) -> AccountingPage:
+    """Fixture that completes admin login and opens Accounting COD collection."""
+    login_page.open()
+    login_page.login(settings.TEST_USER_EMAIL, settings.TEST_USER_PASSWORD)
+    accounting_page.open_cod_collection()
+    return accounting_page
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):

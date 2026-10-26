@@ -38,5 +38,6 @@ blob-report/
 reports/
 screenshots/
 *.png
+!tests/assets/*.png
 *.webm
 *.zip

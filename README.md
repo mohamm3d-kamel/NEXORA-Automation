@@ -32,18 +32,21 @@ NEXORA-Automation/
 │   ├── merchant_page.py         # Merchant dashboard, orders, and pickup scheduling
 │   ├── pickups_admin_page.py    # Tenant Admin pickups list & driver assignment
 │   ├── driver_page.py           # Driver active pickups, Today's Manifest, deliver/fail modals
-│   └── process_management_page.py # Process Management warehouse scanning & dispatch
+│   ├── process_management_page.py # Process Management warehouse scanning & dispatch
+│   └── accounting_page.py       # Accounting, COD Collection, Manifest Closure & Cash Transfer
 │
 ├── tests/                       # Pytest test suites
 │   ├── __init__.py
 │   ├── conftest.py              # Pytest fixtures and failure screenshot hooks
+│   ├── assets/                  # Test fixture assets (e.g. proof of transfer)
 │   ├── test_login.py            # Authentication, validation, and error handling tests
 │   ├── test_dashboard.py        # Dashboard KPIs and sidebar navigation tests
 │   ├── test_logout.py           # Session termination and authorization redirect tests
 │   ├── test_orders.py           # Orders creation (Cash/Paid, 1-N packages, validations)
 │   ├── test_merchant_lifecycle.py # End-to-end Merchant -> Admin -> Driver lifecycle tests
 │   ├── test_driver_actions.py   # Driver accept/reject and pickup progression tests
-│   └── test_driver_delivery.py  # Driver order delivery, failure recording & FDR tests
+│   ├── test_driver_delivery.py  # Driver order delivery, failure recording & FDR tests
+│   └── test_finance_accounting_cod.py # Finance & Accounting COD collection, closure & cash transfer tests
 │
 ├── utils/                       # Common helpers and constants
 │   ├── __init__.py
@@ -158,6 +161,10 @@ pytest -m smoke
 # Run regression tests only
 pytest -m regression
 
+# Run finance & accounting tests only
+pytest -m accounting
+pytest -m finance
+
 # Run authentication/login tests only
 pytest -m login
 
@@ -193,6 +200,7 @@ pytest tests/test_orders.py
 pytest tests/test_merchant_lifecycle.py
 pytest tests/test_driver_actions.py
 pytest tests/test_driver_delivery.py
+pytest tests/test_finance_accounting_cod.py
 ```
 
 ---
@@ -207,7 +215,7 @@ pytest tests/test_driver_delivery.py
 
 ---
 
-## 🧩 Test Coverage Details (33 Automated Tests)
+## 🧩 Test Coverage Details (42 Automated Tests)
 
 | Module | Test Case | Description | Marker |
 |---|---|---|---|
@@ -247,3 +255,12 @@ pytest tests/test_driver_delivery.py
 | `test_driver_delivery.py` | `test_driver_fail_order_delivery_with_reason` | Driver records delivery failure with reason (`Customer No Answer`) and delivery notes | `regression`, `driver` |
 | `test_driver_delivery.py` | `test_driver_deliver_failed_order_subsequently` | Driver records failure, then recovers and marks order as `Delivered` | `regression`, `driver` |
 | `test_driver_delivery.py` | `test_end_to_end_driver_mixed_batch_lifecycle` | End-to-end multi-order batch: Order A delivered, Order B failed with `Customer Rejected Shipment`, driver dashboard reflects statistics | `e2e`, `driver` |
+| `test_finance_accounting_cod.py` | `test_valid_e2e_cod_manifest_to_closed_and_cash_transfer_approved` | Full E2E valid lifecycle: COD order creation ➔ dispatch ➔ driver delivery with cash collection ➔ COD Collection `Collect Payment` ➔ Delivery Manifest status transitions to `Closed` ➔ reflects in Cash Transfer ➔ submit transfer with proof file ➔ verify pending approval with branch hub ➔ Admin approves transfer ➔ reflects `Approved` in history | `smoke`, `regression`, `finance`, `accounting` |
+| `test_finance_accounting_cod.py` | `test_valid_cash_transfer_rejection_flow` | Submit cash transfer for COD collection ➔ In Pending Approval, Admin clicks Reject with mandatory reason ➔ transitions to `Rejected` status in history | `regression`, `finance`, `accounting` |
+| `test_finance_accounting_cod.py` | `test_invalid_cod_collect_payment_disabled_when_manifest_open` | Asserts `Collect Payment` button is disabled (has HTML `disabled` attribute) when manifest has unfinished shipments | `regression`, `finance`, `accounting` |
+| `test_finance_accounting_cod.py` | `test_invalid_submit_cash_transfer_without_proof` | Asserts submitting cash transfer without mandatory proof file upload fails validation and preserves modal | `regression`, `finance`, `accounting` |
+| `test_finance_accounting_cod.py` | `test_invalid_submit_cash_transfer_zero_or_negative_amount` | Asserts entering amount 0 in cash transfer modal triggers validation error and prevents submission | `regression`, `finance`, `accounting` |
+| `test_finance_accounting_cod.py` | `test_invalid_reject_transfer_cancel_modal_preserves_state` | Verifies opening Reject modal and clicking Cancel leaves the transfer pending without modification | `regression`, `finance`, `accounting` |
+| `test_finance_accounting_cod.py` | `test_edge_hub_branch_filtering_isolation` | Verifies branch / hub dependency: selecting Hub filter cards (`Main Branch`, `Dammam Branch`, etc.) strictly isolates records by manifest branch | `regression`, `finance`, `accounting` |
+| `test_finance_accounting_cod.py` | `test_edge_multiple_cod_batch_transfer_calculation` | Asserts selecting multiple COD checkboxes dynamically calculates and aggregates total amount in modal summary | `regression`, `finance`, `accounting` |
+| `test_finance_accounting_cod.py` | `test_edge_completed_cod_collection_audit_details` | Audits Completed COD Collection tab headers and verifies standard settlement ID format (`COD-YYMMDD-XXXX`) | `regression`, `finance`, `accounting` |
