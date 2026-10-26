@@ -1,0 +1,3 @@
+﻿referenceNumber,secondaryReferenceNumber,priority,packageCount,weightKg,specialInstructions,shippingService,consignorName,consignorPhone,consignorEmail,consignorAddressId,customerId,customerName,customerPhone,customerEmail,address1,city,country,state,postalCode,nationalAddress,latitude,longitude,insuranceRequired,signatureRequired,fragileItems,shipmentValue,paymentMethod,totalAmount
+,,HIGH,1,1.5,Handle with care,Same Day,john doe,,john@example.com,,,john Doe,+966555555555,john@example.com,123 Main St,Riyadh,Saudi Arabia,,11511,,1,1,false,false,false,150,CASH,150
+,,NORMAL,1,5,Deliver before noon,Next Day,john doe,,john@example.com,,,Jane Smith,+966555555555,jane@example.com,456 Oak Ave,Riyadh,Saudi Arabia,,11512,,1,1,false,false,false,200,CASH,200

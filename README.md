@@ -233,7 +233,7 @@ pytest tests/test_manifests.py
 
 ---
 
-## 🧩 Test Coverage Details (84 Automated Tests)
+## 🧩 Test Coverage Details (90 Automated Tests)
 
 | Module | Test Case | Description | Marker |
 |---|---|---|---|
@@ -257,6 +257,12 @@ pytest tests/test_manifests.py
 | `test_orders.py` | `test_package_count_dynamically_renders_sections` | Verifies dynamic package section rendering when changing package count | `regression`, `orders` |
 | `test_orders.py` | `test_validation_empty_merchant_step1` | Asserts validation error when clicking Next without selecting a merchant | `regression`, `orders` |
 | `test_orders.py` | `test_validation_empty_consignee_step2` | Asserts required field validation errors when clicking Next with empty consignee | `regression`, `orders` |
+| `test_orders.py` | `test_valid_download_order_template_csv` | Downloads spreadsheet template from modal, asserts filename `Order_Template.csv` and header schema | `smoke`, `valid`, `orders` |
+| `test_orders.py` | `test_valid_bulk_order_creation_end_to_end` | E2E bulk import: uploads CSV ➔ advances to review ➔ selects merchant ➔ submits batch ➔ verifies `System Bulk` orders created | `smoke`, `valid`, `orders` |
+| `test_orders.py` | `test_invalid_bulk_import_empty_file_next_disabled` | Asserts `Next` button is strictly disabled on import modal until file is attached | `regression`, `invalid`, `orders` |
+| `test_orders.py` | `test_invalid_bulk_review_create_orders_disabled_without_merchant` | Asserts `Create Orders` button remains disabled on review page when merchant is unselected | `regression`, `invalid`, `orders` |
+| `test_orders.py` | `test_edge_bulk_import_modal_cancel_preserves_orders_list` | Attaches file in import modal and clicks Cancel; asserts modal closes and orders table preserved | `regression`, `edge`, `orders` |
+| `test_orders.py` | `test_edge_bulk_review_cancel_redirects_to_orders` | Advances to Review page, clicks Cancel ➔ Yes on confirm modal; asserts safe redirect to orders | `regression`, `edge`, `orders` |
 | `test_merchant_lifecycle.py` | `test_merchant_dashboard_initial_view` | Verifies Merchant Portal greeting ("Welcome back, Merchant") and KPI cards | `smoke`, `merchant` |
 | `test_merchant_lifecycle.py` | `test_merchant_creates_order` | Merchant creates an order with pre-filled merchant profile and existing customer | `smoke`, `merchant` |
 | `test_merchant_lifecycle.py` | `test_merchant_schedules_pickup` | Merchant selects order, schedules pickup with address & date, asserts `PICK-` ID | `pickups`, `merchant` |

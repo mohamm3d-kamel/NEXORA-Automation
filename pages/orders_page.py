@@ -1,14 +1,15 @@
 from typing import List, Optional
-from playwright.sync_api import Page, Locator, expect
+from playwright.sync_api import Page, Locator, expect, Download
 from pages.base_page import BasePage
 from config.settings import settings
 
 class OrdersPage(BasePage):
-    """Page Object for Nexora Orders List and Order Creation Wizard."""
+    """Page Object for Nexora Orders List, Single Order Wizard, and Bulk Order Spreadsheet Import."""
 
     def __init__(self, page: Page):
         super().__init__(page)
         self.orders_url = f"{settings.BASE_URL}/tenant/ttenant/admin/orders/orders"
+        self.review_url = f"{settings.BASE_URL}/tenant/ttenant/admin/orders/review"
 
         # List View Locators
         self.create_order_button: Locator = page.locator("button:has-text('Create Order')").first
@@ -53,6 +54,20 @@ class OrdersPage(BasePage):
 
         # Validation Errors
         self.form_errors: Locator = page.locator(".ant-form-item-explain-error")
+
+        # Bulk Order Spreadsheet Import Locators
+        self.import_spreadsheet_btn: Locator = page.locator("button[aria-label='Import order(s) with spreadsheet'], button:has(.anticon-upload)").first
+        self.import_modal: Locator = page.locator(".ant-modal").first
+        self.template_download_btn: Locator = page.locator(".ant-modal button:has-text('template'), .ant-modal a:has-text('template')").first
+        self.spreadsheet_file_input: Locator = page.locator(".ant-modal input[type='file']").first
+        self.modal_next_btn: Locator = page.locator(".ant-modal button:has-text('Next')").first
+        self.modal_cancel_btn: Locator = page.locator(".ant-modal button:has-text('Cancel')").first
+
+        # Bulk Review Page Locators (/orders/review)
+        self.review_table: Locator = page.locator(".ant-table").first
+        self.review_merchant_select: Locator = page.locator(".ant-select:has-text('Select merchant'), .ant-select:has-text('Merchant')").first
+        self.review_create_orders_btn: Locator = page.locator("button:has-text('Create Orders')").first
+        self.review_cancel_btn: Locator = page.locator("button:has-text('Cancel')").first
 
     # --- Navigation Actions ---
     def open(self) -> "OrdersPage":
@@ -174,3 +189,102 @@ class OrdersPage(BasePage):
         """Retrieve list of currently visible form validation error messages."""
         self.page.wait_for_timeout(500)
         return [err.strip() for err in self.form_errors.all_inner_texts() if err.strip()]
+
+    # =========================================================================
+    # Bulk Order Import via Spreadsheet Methods
+    # =========================================================================
+
+    def open_import_modal(self) -> "OrdersPage":
+        """Click the 'Import order(s) with spreadsheet' button to open import modal."""
+        self.import_spreadsheet_btn.wait_for(state="visible", timeout=self.default_timeout)
+        self.import_spreadsheet_btn.click()
+        self.import_modal.wait_for(state="visible", timeout=self.default_timeout)
+        return self
+
+    def is_import_modal_visible(self) -> bool:
+        """Check if spreadsheet import modal is displayed."""
+        return self.import_modal.is_visible()
+
+    def download_order_template(self, timeout: int = 15000) -> Download:
+        """Click template link inside modal and await browser download."""
+        self.template_download_btn.wait_for(state="visible", timeout=self.default_timeout)
+        with self.page.expect_download(timeout=timeout) as download_info:
+            self.template_download_btn.click()
+        return download_info.value
+
+    def is_modal_next_enabled(self) -> bool:
+        """Check if modal Next button is enabled."""
+        if not self.modal_next_btn.is_visible():
+            return False
+        return self.modal_next_btn.is_enabled()
+
+    def upload_bulk_spreadsheet(self, file_path: str) -> "OrdersPage":
+        """Attach CSV or Excel spreadsheet into the modal file input."""
+        self.spreadsheet_file_input.set_input_files(file_path)
+        self.page.wait_for_timeout(1000)
+        return self
+
+    def click_modal_next(self) -> "OrdersPage":
+        """Click Next button on modal and wait for /orders/review page to load."""
+        self.modal_next_btn.wait_for(state="visible", timeout=self.default_timeout)
+        self.modal_next_btn.click()
+        self.page.wait_for_load_state("networkidle")
+        self.page.wait_for_timeout(2000)
+        return self
+
+    def click_modal_cancel(self) -> "OrdersPage":
+        """Click Cancel button on import modal."""
+        self.modal_cancel_btn.wait_for(state="visible", timeout=self.default_timeout)
+        self.modal_cancel_btn.click()
+        self.page.wait_for_timeout(1000)
+        return self
+
+    def select_review_merchant(self, merchant_name: str = "B2C") -> "OrdersPage":
+        """Select merchant from the dropdown at top of review page."""
+        self.review_merchant_select.wait_for(state="visible", timeout=self.default_timeout)
+        self.review_merchant_select.click()
+        self.page.wait_for_timeout(500)
+        opt = self.page.locator(f".ant-select-item-option:has-text('{merchant_name}')").first
+        opt.wait_for(state="visible", timeout=self.default_timeout)
+        opt.click()
+        self.page.wait_for_timeout(1500)
+        return self
+
+    def is_create_orders_button_enabled(self) -> bool:
+        """Check if 'Create Orders' button on review page is enabled."""
+        if not self.review_create_orders_btn.is_visible():
+            return False
+        return self.review_create_orders_btn.is_enabled()
+
+    def submit_bulk_orders(self) -> "OrdersPage":
+        """Click 'Create Orders' button on review page and await redirection back to orders list."""
+        self.review_create_orders_btn.wait_for(state="visible", timeout=self.default_timeout)
+        self.review_create_orders_btn.click()
+        self.page.wait_for_load_state("networkidle")
+        self.page.wait_for_timeout(3000)
+        return self
+
+    def cancel_bulk_review(self, confirm: bool = True) -> "OrdersPage":
+        """
+        Click Cancel button on review page.
+        If confirm is True, clicks 'Yes' on the confirmation modal ('Are you sure you want to cancel upload?').
+        If confirm is False, clicks 'No' to stay on review page.
+        """
+        self.review_cancel_btn.wait_for(state="visible", timeout=self.default_timeout)
+        self.review_cancel_btn.click()
+        self.page.wait_for_timeout(500)
+        confirm_btn_text = "Yes" if confirm else "No"
+        confirm_btn = self.page.locator(f".ant-modal button:has-text('{confirm_btn_text}')").first
+        if confirm_btn.is_visible():
+            confirm_btn.click()
+            self.page.wait_for_load_state("networkidle")
+            self.page.wait_for_timeout(1500)
+        return self
+
+    def get_order_row_text(self, ref_number: str) -> str:
+        """Return the inner text of the order row matching the given reference number."""
+        self.page.wait_for_timeout(1000)
+        row = self.page.locator(f".ant-table-tbody tr:has-text('{ref_number}')").first
+        if row.is_visible():
+            return row.inner_text().strip()
+        return ""
