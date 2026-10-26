@@ -36,7 +36,8 @@ NEXORA-Automation/
 │   ├── accounting_page.py       # Accounting, COD Collection, Manifest Closure & Cash Transfer
 │   ├── sla_page.py              # Service Level Agreement (Rules, Tracking, Rematch)
 │   ├── reports_page.py          # Reports (Shipment, Performance, Finance, Query Builder, Export)
-│   └── manifests_page.py        # Delivery & Pickup Manifests, Intra-Hub, Return & Pickups page objects
+│   ├── manifests_page.py        # Delivery & Pickup Manifests, Intra-Hub, Return & Pickups page objects
+│   └── tickets_page.py          # Tickets management (Customer/Driver/Ops, thread replies, Close, Wizard)
 │
 ├── tests/                       # Pytest test suites
 │   ├── __init__.py
@@ -52,7 +53,8 @@ NEXORA-Automation/
 │   ├── test_finance_accounting_cod.py # Finance & Accounting COD collection, closure & cash transfer tests
 │   ├── test_sla.py              # SLA module rules, tracking, rematch & validation tests
 │   ├── test_reports.py          # Reports module generation, preview, export & format tests
-│   └── test_manifests.py        # Delivery & Pickup Manifests, detail view, export & validation tests
+│   ├── test_manifests.py        # Delivery & Pickup Manifests, detail view, export & validation tests
+│   └── test_tickets.py          # Tickets management, thread conversation, status lifecycle & wizard tests
 │
 ├── utils/                       # Common helpers and constants
 │   ├── __init__.py
@@ -180,6 +182,9 @@ pytest -m reports
 # Run Manifests (Delivery & Pickups) tests only
 pytest -m manifests
 
+# Run Tickets management tests only
+pytest -m tickets
+
 # Run authentication/login tests only
 pytest -m login
 
@@ -219,6 +224,7 @@ pytest tests/test_finance_accounting_cod.py
 pytest tests/test_sla.py
 pytest tests/test_reports.py
 pytest tests/test_manifests.py
+pytest tests/test_tickets.py
 ```
 
 ---
@@ -233,7 +239,7 @@ pytest tests/test_manifests.py
 
 ---
 
-## 🧩 Test Coverage Details (90 Automated Tests)
+## 🧩 Test Coverage Details (102 Automated Tests)
 
 | Module | Test Case | Description | Marker |
 |---|---|---|---|
@@ -327,3 +333,15 @@ pytest tests/test_manifests.py
 | `test_manifests.py` | `test_edge_rapid_tab_switching_preserves_stability` | Rapidly switches across all 4 manifest tabs, asserting UI stability and clean final rendering | `regression`, `edge`, `manifests` |
 | `test_manifests.py` | `test_edge_delivery_manifest_print_button_interaction` | Verifies Print button on manifest detail view is enabled and clickable without unhandled errors | `regression`, `edge`, `manifests` |
 | `test_manifests.py` | `test_edge_pickups_search_nonexistent_handles_empty_state` | Searches for nonexistent pickup identifier and asserts clean empty state handling | `regression`, `edge`, `manifests` |
+| `test_tickets.py` | `test_valid_navigate_all_ticket_category_tabs` | Validates loading and header schemas across Customer Support, Driver Support, and Operation Tickets tabs | `valid`, `tickets` |
+| `test_tickets.py` | `test_valid_tickets_status_filter_tabs` | Switches between Open, Closed, and Archived status tabs and verifies table row counts | `valid`, `tickets` |
+| `test_tickets.py` | `test_valid_ticket_detail_view_and_thread` | Opens ticket detail view (`/tickets/:id`), asserting ticket number, status badge, and conversation controls | `valid`, `tickets` |
+| `test_tickets.py` | `test_valid_send_ticket_reply_message` | Sends a unique timestamped reply in ticket thread and verifies message is reflected in conversation thread DOM | `valid`, `tickets` |
+| `test_tickets.py` | `test_valid_close_ticket_lifecycle` | Clicks `Close Ticket`, asserts status badge updates to `Closed`, and verifies ticket appears in Closed tab view | `valid`, `tickets` |
+| `test_tickets.py` | `test_valid_search_tickets_by_prefix` | Searches tickets by `TKT-` prefix, verifies matching results, and tests search clearing | `valid`, `tickets` |
+| `test_tickets.py` | `test_invalid_search_nonexistent_ticket` | Searches for nonexistent ticket identifier and asserts `No Data` empty state with 0 rows | `invalid`, `tickets` |
+| `test_tickets.py` | `test_invalid_send_reply_empty_button_disabled` | Verifies the reply send button has `disabled` state when the reply textarea is empty | `invalid`, `tickets` |
+| `test_tickets.py` | `test_invalid_new_ticket_wizard_step1_empty_validation` | Asserts wizard blocks progression when Next is clicked empty, and triggers inline `Subject is required` validation error | `invalid`, `tickets` |
+| `test_tickets.py` | `test_edge_rapid_status_tab_switching` | Rapidly cycles between Open, Closed, and Archived tabs, asserting table resilience without hung spinners | `edge`, `tickets` |
+| `test_tickets.py` | `test_edge_cancel_new_ticket_wizard_preserves_list` | Opens New Ticket wizard and cancels, asserting safe return to tickets list with table and headers intact | `edge`, `tickets` |
+| `test_tickets.py` | `test_edge_operation_tickets_empty_or_data_resilience` | Switches across Driver Support and Operation Tickets tabs, verifying data or empty state handling without JS errors | `edge`, `tickets` |

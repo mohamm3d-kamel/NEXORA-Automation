@@ -15,6 +15,7 @@ from pages.accounting_page import AccountingPage
 from pages.sla_page import SlaPage
 from pages.reports_page import ReportsPage
 from pages.manifests_page import ManifestsPage
+from pages.tickets_page import TicketsPage
 
 @pytest.fixture(scope="session")
 def browser_type_launch_args(browser_type_launch_args: Dict[str, Any]):
@@ -151,6 +152,11 @@ def manifests_page(page: Page) -> ManifestsPage:
     return ManifestsPage(page)
 
 @pytest.fixture
+def tickets_page(page: Page) -> TicketsPage:
+    """Fixture to provide an initialized TicketsPage instance."""
+    return TicketsPage(page)
+
+@pytest.fixture
 def proof_file_path() -> str:
     """Path to the dummy proof asset for cash transfer submissions."""
     asset_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "assets", "dummy_proof.png"))
@@ -215,6 +221,14 @@ def authenticated_manifests(page: Page, login_page: LoginPage, manifests_page: M
     login_page.login(settings.TEST_USER_EMAIL, settings.TEST_USER_PASSWORD)
     manifests_page.open_delivery_manifests()
     return manifests_page
+
+@pytest.fixture
+def authenticated_tickets(page: Page, login_page: LoginPage, tickets_page: TicketsPage) -> TicketsPage:
+    """Fixture that completes admin login and opens Tickets management."""
+    login_page.open()
+    login_page.login(settings.TEST_USER_EMAIL, settings.TEST_USER_PASSWORD)
+    tickets_page.open_tickets()
+    return tickets_page
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
