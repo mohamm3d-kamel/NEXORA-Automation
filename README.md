@@ -1,2 +1,249 @@
-# NEXORA-Automation
-Automation workspace for NEXORA
+# Nexora Web App Automation Testing Framework
+
+An enterprise-grade, scalable End-to-End (E2E) automation testing framework designed for the **Nexora** web application (`https://staging.app.n3xora.net`).
+
+Built with **Python 3.12**, **Playwright**, and **pytest**, implementing the **Page Object Model (POM)** architectural design pattern.
+
+---
+
+## 🏗️ Architecture Overview
+
+The framework separates test logic, page interactions, configuration, and test data into decoupled layers:
+
+```
+NEXORA-Automation/
+├── .env                         # Local environment variables & secrets
+├── .env.example                 # Example configuration template
+├── .gitignore                   # Git ignore rules
+├── pytest.ini                   # Pytest configuration, flags, and markers
+├── requirements.txt             # Project Python dependencies
+├── README.md                    # Project documentation
+│
+├── config/                      # Environment & global framework settings
+│   ├── __init__.py
+│   └── settings.py              # Strongly-typed configuration loaded from .env
+│
+├── pages/                       # Page Object Model (POM) representations
+│   ├── __init__.py
+│   ├── base_page.py             # Reusable UI actions, waits, and assertions
+│   ├── login_page.py            # Nexora Login page locators and user actions
+│   ├── dashboard_page.py        # Nexora Dashboard header, sidebar, and KPI cards
+│   ├── orders_page.py           # Orders list & multi-step Order Creation Wizard
+│   ├── merchant_page.py         # Merchant dashboard, orders, and pickup scheduling
+│   ├── pickups_admin_page.py    # Tenant Admin pickups list & driver assignment
+│   ├── driver_page.py           # Driver active pickups, Today's Manifest, deliver/fail modals
+│   └── process_management_page.py # Process Management warehouse scanning & dispatch
+│
+├── tests/                       # Pytest test suites
+│   ├── __init__.py
+│   ├── conftest.py              # Pytest fixtures and failure screenshot hooks
+│   ├── test_login.py            # Authentication, validation, and error handling tests
+│   ├── test_dashboard.py        # Dashboard KPIs and sidebar navigation tests
+│   ├── test_logout.py           # Session termination and authorization redirect tests
+│   ├── test_orders.py           # Orders creation (Cash/Paid, 1-N packages, validations)
+│   ├── test_merchant_lifecycle.py # End-to-end Merchant -> Admin -> Driver lifecycle tests
+│   ├── test_driver_actions.py   # Driver accept/reject and pickup progression tests
+│   └── test_driver_delivery.py  # Driver order delivery, failure recording & FDR tests
+│
+├── utils/                       # Common helpers and constants
+│   ├── __init__.py
+│   └── test_data.py             # Validation messages, menu items, and KPI card titles
+│
+└── reports/                     # Test execution outputs
+    ├── test-report.html         # Self-contained HTML test report
+    └── screenshots/             # Automatically captured screenshots on failures
+```
+
+---
+
+## 📋 Prerequisites
+
+- **Python 3.10+** (Python 3.12 recommended)
+- **PowerShell / Bash** terminal
+
+---
+
+## 🚀 Getting Started
+
+### 1. Clone & Setup Virtual Environment
+
+```powershell
+# Navigate to the workspace
+cd d:\N3XORA\NEXORA-Automation
+
+# Create Python virtual environment
+python -m venv .venv
+
+# Activate the virtual environment
+# On Windows PowerShell:
+.\.venv\Scripts\Activate.ps1
+# On Linux/macOS:
+# source .venv/bin/activate
+```
+
+### 2. Install Dependencies & Playwright Browsers
+
+```powershell
+# Upgrade pip and install required packages
+pip install -r requirements.txt
+
+# Install Playwright browser binaries
+playwright install chromium
+```
+
+### 3. Configure Environment Variables
+
+Verify or customize `.env`:
+
+```ini
+BASE_URL=https://staging.app.n3xora.net
+LOGIN_PATH=/ttenant/login
+DASHBOARD_PATH=/tenant/ttenant/admin/dashboard
+
+# Tenant Admin Credentials
+TEST_USER_EMAIL=ttenant@gmail.com
+TEST_USER_PASSWORD=12345678
+
+# Merchant Credentials
+MERCHANT_EMAIL=b2c@merchant.com
+MERCHANT_PASSWORD=123456789
+
+# Driver Credentials
+DRIVER_EMAIL=b2c@driver.com
+DRIVER_PASSWORD=12345678
+
+HEADLESS=true
+BROWSER=chromium
+DEFAULT_TIMEOUT=30000
+DEFAULT_ZOOM=67%
+```
+
+---
+
+## 🖥️ Screen Fit & Zoom (67%)
+
+- **Automatic Screen Fit**: The framework dynamically queries the host display resolution (`user32` DPI-aware) and launches Chromium with `--start-maximized` and `--window-size=<width>,<height>`, matching the full viewport size across all single- and multi-role contexts.
+- **67% Zoom**: Enforced via Playwright `add_init_script` and reinforced on every navigation in [`BasePage`](file:///d:/N3XORA/NEXORA-Automation/pages/base_page.py). This ensures that dense Ant Design tables, KPI cards, sidebar navigation, and multi-step modals scale down to 67%, preventing horizontal overflow or truncated elements.
+
+---
+
+## 🧪 Running Tests
+
+### Run Full Test Suite
+
+```powershell
+pytest
+```
+
+### Run in Headed Mode (Watch Browser Execution)
+
+```powershell
+pytest --headed --slowmo 500
+```
+
+### Run Tests in Parallel (Multi-threaded)
+
+```powershell
+pytest -n auto
+# Or specify worker count:
+pytest -n 2
+```
+
+### Run Specific Test Suites by Marker
+
+```powershell
+# Run smoke tests only
+pytest -m smoke
+
+# Run regression tests only
+pytest -m regression
+
+# Run authentication/login tests only
+pytest -m login
+
+# Run dashboard tests only
+pytest -m dashboard
+
+# Run logout tests only
+pytest -m logout
+
+# Run orders tests only
+pytest -m orders
+
+# Run merchant lifecycle tests only
+pytest -m merchant
+
+# Run pickup assignment tests only
+pytest -m pickups
+
+# Run driver portal & delivery tests only
+pytest -m driver
+
+# Run full cross-role E2E tests only
+pytest -m e2e
+```
+
+### Run a Specific Test File
+
+```powershell
+pytest tests/test_login.py
+pytest tests/test_dashboard.py
+pytest tests/test_logout.py
+pytest tests/test_orders.py
+pytest tests/test_merchant_lifecycle.py
+pytest tests/test_driver_actions.py
+pytest tests/test_driver_delivery.py
+```
+
+---
+
+## 📊 Test Reports & Failure Artifacts
+
+- **HTML Report**: Automatically generated on every test run at `reports/test-report.html`. Open it in any browser:
+  ```powershell
+  Start-Process reports/test-report.html
+  ```
+- **Automatic Failure Screenshots**: If any assertion or interaction fails, the `pytest_runtest_makereport` hook captures a full-page screenshot in `reports/screenshots/<test_name>.png`.
+
+---
+
+## 🧩 Test Coverage Details (33 Automated Tests)
+
+| Module | Test Case | Description | Marker |
+|---|---|---|---|
+| `test_login.py` | `test_login_page_renders_properly` | Validates page title and presence of email, password inputs, buttons | `smoke`, `login` |
+| `test_login.py` | `test_successful_login` | Authenticates with valid tenant credentials and verifies redirect to `/dashboard` | `smoke`, `login` |
+| `test_login.py` | `test_login_empty_credentials_validation` | Validates "Email is required" and "Password is required" on empty submit | `login` |
+| `test_login.py` | `test_login_empty_password_only` | Validates "Password is required" error when only email is typed | `login` |
+| `test_login.py` | `test_login_empty_email_only` | Validates "Email is required" error when only password is typed | `login` |
+| `test_login.py` | `test_login_invalid_credentials` | Asserts `401` response, "Invalid credentials" error alert, and prevents login | `regression`, `login` |
+| `test_login.py` | `test_login_wrong_password` | Asserts "Invalid credentials" error when given incorrect password | `regression`, `login` |
+| `test_dashboard.py` | `test_dashboard_welcome_and_header` | Verifies "Welcome back, Tenant Admin", avatar, and search input | `smoke`, `dashboard` |
+| `test_dashboard.py` | `test_sidebar_navigation_menus` | Verifies all 10 sidebar links (Orders, Reports, Finance, SLA, etc.) | `regression`, `dashboard` |
+| `test_dashboard.py` | `test_kpi_summary_cards_visible` | Validates core KPI widgets (New Orders, Delivery Rate, Cash Pending, etc.) | `regression`, `dashboard` |
+| `test_logout.py` | `test_user_logout_success` | Verifies profile menu logout terminates session and returns to login page | `smoke`, `logout` |
+| `test_logout.py` | `test_dashboard_inaccessible_after_logout` | Asserts unauthenticated access to `/dashboard` redirects back to `/login` | `regression`, `logout` |
+| `test_orders.py` | `test_create_order_single_package_cash` | Creates 1-package order with Cash (COD), asserts order created in list | `smoke`, `orders` |
+| `test_orders.py` | `test_create_order_multiple_packages_cash` | Creates multi-package (3) order with Cash, asserts 3 package cards & submission | `regression`, `orders` |
+| `test_orders.py` | `test_create_order_single_package_paid` | Creates 1-package order with Paid (prepaid), Total Amount hidden, asserts submission | `smoke`, `orders` |
+| `test_orders.py` | `test_create_order_multiple_packages_paid` | Creates multi-package (2) order with Paid, asserts submission in list | `regression`, `orders` |
+| `test_orders.py` | `test_payment_method_dynamic_fields_toggle` | Verifies switching Cash -> Paid hides Total Amount, and switching back reveals it | `regression`, `orders` |
+| `test_orders.py` | `test_package_count_dynamically_renders_sections` | Verifies dynamic package section rendering when changing package count | `regression`, `orders` |
+| `test_orders.py` | `test_validation_empty_merchant_step1` | Asserts validation error when clicking Next without selecting a merchant | `regression`, `orders` |
+| `test_orders.py` | `test_validation_empty_consignee_step2` | Asserts required field validation errors when clicking Next with empty consignee | `regression`, `orders` |
+| `test_merchant_lifecycle.py` | `test_merchant_dashboard_initial_view` | Verifies Merchant Portal greeting ("Welcome back, Merchant") and KPI cards | `smoke`, `merchant` |
+| `test_merchant_lifecycle.py` | `test_merchant_creates_order` | Merchant creates an order with pre-filled merchant profile and existing customer | `smoke`, `merchant` |
+| `test_merchant_lifecycle.py` | `test_merchant_schedules_pickup` | Merchant selects order, schedules pickup with address & date, asserts `PICK-` ID | `pickups`, `merchant` |
+| `test_merchant_lifecycle.py` | `test_driver_portal_active_pickups` | Driver logs in and verifies Active Pickups table with status and actions | `driver` |
+| `test_merchant_lifecycle.py` | `test_full_cross_role_e2e_integration` | Full multi-role flow: Merchant creates order ➔ schedules pickup ➔ dashboard updates ➔ Tenant Admin assigns driver (`b2c driver`) ➔ status transitions to 'Driver Assigned' ➔ driver views active pickup | `e2e`, `merchant` |
+| `test_driver_actions.py` | `test_driver_portal_active_pickups_table` | Driver logs in and validates Active Pickups table columns and action buttons | `smoke`, `driver` |
+| `test_driver_actions.py` | `test_driver_proceed_accepted_pickup_details` | Driver proceeds with accepted pickup (`View details`), asserts details & orders list | `regression`, `driver` |
+| `test_driver_actions.py` | `test_driver_accept_assigned_pickup` | Driver clicks `Accept` on assigned pickup; asserts status transitions to `Driver Accepted` | `regression`, `driver` |
+| `test_driver_actions.py` | `test_driver_reject_assigned_pickup` | Driver clicks `Reject` on assigned pickup; asserts rejection confirmation | `regression`, `driver` |
+| `test_driver_actions.py` | `test_full_lifecycle_driver_accept_and_proceed` | End-to-end flow: Order creation ➔ Pickup scheduling ➔ Admin driver assignment ➔ Driver accept ➔ Driver proceeds to view pickup details | `e2e`, `driver` |
+| `test_driver_delivery.py` | `test_driver_portal_today_manifest_view` | Driver verifies Today's Manifest headers, manifest details card, and shipments table | `smoke`, `driver` |
+| `test_driver_delivery.py` | `test_driver_dashboard_kpis_display` | Driver verifies presence of core KPI metrics (`Total deliveries`, `Total failed`, etc.) | `smoke`, `driver` |
+| `test_driver_delivery.py` | `test_driver_deliver_assigned_order` | Driver delivers assigned order from Today's Manifest; asserts status updates to `Delivered` | `regression`, `driver` |
+| `test_driver_delivery.py` | `test_driver_fail_order_delivery_with_reason` | Driver records delivery failure with reason (`Customer No Answer`) and delivery notes | `regression`, `driver` |
+| `test_driver_delivery.py` | `test_driver_deliver_failed_order_subsequently` | Driver records failure, then recovers and marks order as `Delivered` | `regression`, `driver` |
+| `test_driver_delivery.py` | `test_end_to_end_driver_mixed_batch_lifecycle` | End-to-end multi-order batch: Order A delivered, Order B failed with `Customer Rejected Shipment`, driver dashboard reflects statistics | `e2e`, `driver` |
