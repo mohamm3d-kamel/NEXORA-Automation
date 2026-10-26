@@ -230,6 +230,14 @@ def authenticated_tickets(page: Page, login_page: LoginPage, tickets_page: Ticke
     tickets_page.open_tickets()
     return tickets_page
 
+@pytest.fixture
+def authenticated_orders(page: Page, login_page: LoginPage, orders_page: OrdersPage) -> OrdersPage:
+    """Fixture that completes admin login and opens Orders management."""
+    login_page.open()
+    login_page.login(settings.TEST_USER_EMAIL, settings.TEST_USER_PASSWORD)
+    orders_page.open()
+    return orders_page
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     """Hook to capture a screenshot on test failure and save to screenshots/ directory."""

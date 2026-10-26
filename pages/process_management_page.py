@@ -103,6 +103,19 @@ class ProcessManagementPage(BasePage):
         self.select_driver(driver_name)
         self.scan_barcode(shipment_number)
 
+    def deliver_order(self, shipment_number: str) -> None:
+        """Mark an order as Delivered via Process Management barcode scan."""
+        self.open()
+        self.select_action("Delivered")
+        self.scan_barcode(shipment_number)
+
+    def fail_order_delivery(self, shipment_number: str, reason: str = "Customer Rejected Shipment") -> None:
+        """Mark an order as Delivery Failed with a failure reason via Process Management."""
+        self.open()
+        self.select_action("Delivery Failed")
+        self.select_failure_reason(reason)
+        self.scan_barcode(shipment_number)
+
     def get_latest_notification_text(self) -> str:
         """Get latest notification text from the scan table."""
         if self.notifications_table.count() > 0:

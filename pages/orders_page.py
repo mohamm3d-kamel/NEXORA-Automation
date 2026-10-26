@@ -1,4 +1,6 @@
-from typing import List, Optional
+import re
+import time
+from typing import List, Optional, Tuple
 from playwright.sync_api import Page, Locator, expect, Download
 from pages.base_page import BasePage
 from config.settings import settings
@@ -91,6 +93,37 @@ class OrdersPage(BasePage):
         """Click 'Back' button to return to previous wizard step."""
         self.back_button.click()
         self.page.wait_for_timeout(1000)
+
+    def cancel_wizard(self) -> None:
+        """Cancel and dismiss the Order creation wizard from any step."""
+        close_btn = self.page.locator(".ant-modal-close, button[aria-label='Close']").first
+        try:
+            if close_btn.is_visible(timeout=1000):
+                close_btn.click()
+                self.page.wait_for_timeout(800)
+                return
+        except Exception:
+            pass
+
+        cancel_btn = self.page.locator("button:has-text('Cancel')").first
+        try:
+            if cancel_btn.is_visible(timeout=1000):
+                cancel_btn.click()
+                self.page.wait_for_timeout(800)
+                return
+        except Exception:
+            pass
+
+        # If on Step 2 or later, click Back until Cancel is available
+        back_btn = self.page.locator("button:has-text('Back')").first
+        for _ in range(3):
+            if cancel_btn.is_visible():
+                cancel_btn.click()
+                self.page.wait_for_timeout(800)
+                break
+            if back_btn.is_visible():
+                back_btn.click()
+                self.page.wait_for_timeout(500)
 
     # --- Step 1: General Actions ---
     def select_merchant(self, search_text: str = "B2C") -> None:
@@ -281,10 +314,107 @@ class OrdersPage(BasePage):
             self.page.wait_for_timeout(1500)
         return self
 
-    def get_order_row_text(self, ref_number: str) -> str:
-        """Return the inner text of the order row matching the given reference number."""
+    def get_order_row_text(self, ref_number: str, search_if_missing: bool = True) -> str:
+        """Return the inner text of the order row matching the given reference or shipment number."""
         self.page.wait_for_timeout(1000)
         row = self.page.locator(f".ant-table-tbody tr:has-text('{ref_number}')").first
-        if row.is_visible():
+        try:
+            row.wait_for(state="visible", timeout=4000)
             return row.inner_text().strip()
+        except Exception:
+            pass
+
+        if search_if_missing:
+            search_input = self.page.locator("input[placeholder*='Scan or paste']").first
+            if search_input.is_visible():
+                search_input.fill("")
+                search_input.fill(ref_number)
+                search_input.press("Enter")
+                self.page.wait_for_timeout(1500)
+                try:
+                    row.wait_for(state="visible", timeout=6000)
+                    return row.inner_text().strip()
+                except Exception:
+                    pass
+        return ""
+
+    # =========================================================================
+    # Return Orders Methods
+    # =========================================================================
+
+    def select_shipment_type(self, shipment_type: str = "Return") -> None:
+        """Select shipment type in Step 2 ('Normal' or 'Return')."""
+        type_sel = self.page.locator(".ant-form-item:has-text('Shipment Type') .ant-select").first
+        type_sel.wait_for(state="visible", timeout=self.default_timeout)
+        type_sel.click()
+        self.page.wait_for_timeout(300)
+        opt = self.page.locator(
+            f".ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option:has-text('{shipment_type}')"
+        ).first
+        opt.wait_for(state="visible", timeout=self.default_timeout)
+        opt.click()
+        self.page.wait_for_timeout(500)
+
+    def submit_return_order(self) -> None:
+        """Click Create Order button on Step 2 (payment step is skipped for returns)."""
+        btn = self.page.locator(".ant-modal button:has-text('Create Order'), form button:has-text('Create Order')").first
+        btn.wait_for(state="visible", timeout=self.default_timeout)
+        btn.click()
+        self.page.wait_for_timeout(3000)
+
+    def create_return_order(
+        self,
+        merchant: str = "B2C",
+        ref_number: Optional[str] = None,
+        package_count: int = 1,
+        consignee_name: str = "Return Customer",
+        consignee_phone: str = "501234567",
+        consignee_address: str = "King Fahd Road, Return St",
+        national_address: str = "11537",
+    ) -> Tuple[str, str]:
+        """
+        Creates a Return order end-to-end and returns (shipment_number, reference_number).
+        """
+        if not ref_number:
+            uid = int(time.time() * 1000) % 100000000
+            ref_number = f"RET-ORD-{uid}"
+
+        self.click_create_order()
+        self.select_merchant(merchant)
+        self.set_reference_number(ref_number)
+        self.set_package_count(package_count)
+        self.click_next()
+
+        self.select_shipment_type("Return")
+        self.fill_shipment_details(
+            name=consignee_name,
+            phone=consignee_phone,
+            address=consignee_address,
+            national_address=national_address,
+        )
+        self.submit_return_order()
+
+        # Extract shipment number from table
+        self.open()
+        self.page.wait_for_timeout(2000)
+        row_text = self.get_order_row_text(ref_number)
+        m = re.search(r"ORD[A-Z0-9]+", row_text)
+        shipment_number = m.group(0) if m else ""
+        return shipment_number, ref_number
+
+    def get_order_status(self, shipment_number_or_ref: str) -> str:
+        """Returns the status text of the order row (e.g. 'Created', 'Delivered', 'Delivery Failed')."""
+        row_text = self.get_order_row_text(shipment_number_or_ref)
+        for s in ["Created", "Out for Delivery", "Delivered", "Delivery Failed", "Return Requested", "Picked Up"]:
+            if s in row_text:
+                return s
+        return ""
+
+    def get_order_shipment_type(self, shipment_number_or_ref: str) -> str:
+        """Returns the shipment type from the order row ('RETURN' or 'NORMAL')."""
+        row_text = self.get_order_row_text(shipment_number_or_ref)
+        if "RETURN" in row_text:
+            return "RETURN"
+        if "NORMAL" in row_text:
+            return "NORMAL"
         return ""

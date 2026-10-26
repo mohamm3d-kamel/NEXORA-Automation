@@ -54,7 +54,8 @@ NEXORA-Automation/
 │   ├── test_sla.py              # SLA module rules, tracking, rematch & validation tests
 │   ├── test_reports.py          # Reports module generation, preview, export & format tests
 │   ├── test_manifests.py        # Delivery & Pickup Manifests, detail view, export & validation tests
-│   └── test_tickets.py          # Tickets management, thread conversation, status lifecycle & wizard tests
+│   ├── test_tickets.py          # Tickets management, thread conversation, status lifecycle & wizard tests
+│   └── test_return_orders.py    # Return orders creation, dispatch, Delivery, and Delivery Failed lifecycle tests
 │
 ├── utils/                       # Common helpers and constants
 │   ├── __init__.py
@@ -185,6 +186,9 @@ pytest -m manifests
 # Run Tickets management tests only
 pytest -m tickets
 
+# Run Return Orders tests only
+pytest -m return_orders
+
 # Run authentication/login tests only
 pytest -m login
 
@@ -225,6 +229,7 @@ pytest tests/test_sla.py
 pytest tests/test_reports.py
 pytest tests/test_manifests.py
 pytest tests/test_tickets.py
+pytest tests/test_return_orders.py
 ```
 
 ---
@@ -239,7 +244,7 @@ pytest tests/test_tickets.py
 
 ---
 
-## 🧩 Test Coverage Details (102 Automated Tests)
+## 🧩 Test Coverage Details (114 Automated Tests)
 
 | Module | Test Case | Description | Marker |
 |---|---|---|---|
@@ -345,3 +350,15 @@ pytest tests/test_tickets.py
 | `test_tickets.py` | `test_edge_rapid_status_tab_switching` | Rapidly cycles between Open, Closed, and Archived tabs, asserting table resilience without hung spinners | `edge`, `tickets` |
 | `test_tickets.py` | `test_edge_cancel_new_ticket_wizard_preserves_list` | Opens New Ticket wizard and cancels, asserting safe return to tickets list with table and headers intact | `edge`, `tickets` |
 | `test_tickets.py` | `test_edge_operation_tickets_empty_or_data_resilience` | Switches across Driver Support and Operation Tickets tabs, verifying data or empty state handling without JS errors | `edge`, `tickets` |
+| `test_return_orders.py` | `test_valid_create_single_return_order` | Creates Return order (`Shipment Type = Return`), verifies customer-to-merchant address inversion and table presence | `valid`, `orders`, `return_orders` |
+| `test_return_orders.py` | `test_valid_create_multi_package_return_order` | Creates multi-package (3 packages) Return order and asserts table presence with `RETURN` shipment type | `valid`, `orders`, `return_orders` |
+| `test_return_orders.py` | `test_valid_return_order_lifecycle_delivered` | Full lifecycle: Return order creation ➔ dispatch to driver (`Out for Delivery`) ➔ scan `Delivered` in PM ➔ status reflects `Delivered` | `valid`, `orders`, `return_orders` |
+| `test_return_orders.py` | `test_valid_return_order_lifecycle_delivery_failed` | Full lifecycle: Return order creation ➔ dispatch ➔ scan `Delivery Failed` with rejection reason ➔ status reflects `Delivery Failed` | `valid`, `orders`, `return_orders` |
+| `test_return_orders.py` | `test_valid_return_order_failed_then_recovered_to_delivered` | Recovery lifecycle: Return order creation ➔ dispatch ➔ records failure ➔ subsequent re-attempt scans `Delivered` ➔ transitions to `Delivered` | `valid`, `orders`, `return_orders` |
+| `test_return_orders.py` | `test_valid_search_and_filter_return_orders` | Searches orders table by Return shipment number using search input, asserting exact row filtering | `valid`, `orders`, `return_orders` |
+| `test_return_orders.py` | `test_invalid_create_return_order_missing_mandatory_consignee_name` | Asserts inline validation error when submitting Return order without consignee customer name | `invalid`, `orders`, `return_orders` |
+| `test_return_orders.py` | `test_invalid_create_return_order_missing_mandatory_phone` | Asserts inline validation error when submitting Return order without consignee phone number | `invalid`, `orders`, `return_orders` |
+| `test_return_orders.py` | `test_invalid_process_management_delivery_failed_missing_reason` | Asserts Process Management prevents marking delivery failed when no failure reason is selected | `invalid`, `orders`, `return_orders` |
+| `test_return_orders.py` | `test_edge_return_wizard_toggle_shipment_type` | Toggles Shipment Type dynamically between Normal and Return; verifies action button toggles between Next and Create Order | `edge`, `orders`, `return_orders` |
+| `test_return_orders.py` | `test_edge_cancel_return_wizard_step2_preserves_orders_table` | Enters Return details on Step 2, cancels wizard, and verifies modal unmounts cleanly without saving draft | `edge`, `orders`, `return_orders` |
+| `test_return_orders.py` | `test_edge_return_order_update_status_modal_action` | Uses row Actions ➔ `Update Status` modal on a Return order to transition status to `Picked Up` | `edge`, `orders`, `return_orders` |
