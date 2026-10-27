@@ -37,7 +37,8 @@ NEXORA-Automation/
 │   ├── sla_page.py              # Service Level Agreement (Rules, Tracking, Rematch)
 │   ├── reports_page.py          # Reports (Shipment, Performance, Finance, Query Builder, Export)
 │   ├── manifests_page.py        # Delivery & Pickup Manifests, Intra-Hub, Return & Pickups page objects
-│   └── tickets_page.py          # Tickets management (Customer/Driver/Ops, thread replies, Close, Wizard)
+│   ├── tickets_page.py          # Tickets management (Customer/Driver/Ops, thread replies, Close, Wizard)
+│   └── b2b_orders_page.py       # B2B Order Management (Tenant/Merchant portals, accept, reject, delay, assign driver, delete)
 │
 ├── tests/                       # Pytest test suites
 │   ├── __init__.py
@@ -55,7 +56,8 @@ NEXORA-Automation/
 │   ├── test_reports.py          # Reports module generation, preview, export & format tests
 │   ├── test_manifests.py        # Delivery & Pickup Manifests, detail view, export & validation tests
 │   ├── test_tickets.py          # Tickets management, thread conversation, status lifecycle & wizard tests
-│   └── test_return_orders.py    # Return orders creation, dispatch, Delivery, and Delivery Failed lifecycle tests
+│   ├── test_return_orders.py    # Return orders creation, dispatch, Delivery, and Delivery Failed lifecycle tests
+│   └── test_b2b_orders.py       # B2B Order Management across Tenant Admin and Merchant portals (14 tests)
 │
 ├── utils/                       # Common helpers and constants
 │   ├── __init__.py
@@ -362,3 +364,17 @@ pytest tests/test_return_orders.py
 | `test_return_orders.py` | `test_edge_return_wizard_toggle_shipment_type` | Toggles Shipment Type dynamically between Normal and Return; verifies action button toggles between Next and Create Order | `edge`, `orders`, `return_orders` |
 | `test_return_orders.py` | `test_edge_cancel_return_wizard_step2_preserves_orders_table` | Enters Return details on Step 2, cancels wizard, and verifies modal unmounts cleanly without saving draft | `edge`, `orders`, `return_orders` |
 | `test_return_orders.py` | `test_edge_return_order_update_status_modal_action` | Uses row Actions ➔ `Update Status` modal on a Return order to transition status to `Picked Up` | `edge`, `orders`, `return_orders` |
+| `test_b2b_orders.py` | `test_valid_b2b_merchant_classification_restriction` | Verifies only merchants with B2B classification appear in Choose Merchant dropdown | `valid`, `b2b` |
+| `test_b2b_orders.py` | `test_valid_tenant_create_b2b_order` | Tenant Admin creates B2B order with Carton loading type; verifies row in Pending Requests | `valid`, `b2b` |
+| `test_b2b_orders.py` | `test_valid_merchant_create_b2b_order` | B2B Merchant creates order in Merchant portal; verifies row in Pending Requests | `valid`, `b2b` |
+| `test_b2b_orders.py` | `test_valid_tenant_accept_order` | Tenant accepts B2B order; transitions from Pending Requests to To Assign (`Scheduled`) | `valid`, `b2b` |
+| `test_b2b_orders.py` | `test_valid_tenant_reject_order` | Tenant rejects B2B order via side drawer with reason; transitions to Rejected by Operations | `valid`, `b2b` |
+| `test_b2b_orders.py` | `test_valid_tenant_accept_with_delay_merchant_accepts` | Tenant accepts with delay ➔ Merchant accepts delay in Awaiting My Approval ➔ moves to To Assign | `valid`, `b2b` |
+| `test_b2b_orders.py` | `test_valid_tenant_accept_with_delay_merchant_rejects` | Tenant accepts with delay ➔ Merchant rejects delay with remarks ➔ moves to Rejected by Merchant | `valid`, `b2b` |
+| `test_b2b_orders.py` | `test_valid_tenant_assign_driver` | Tenant opens Assign Driver, selects driver via Assign One For All & Direct trip mode ➔ In Progress (`Driver Assigned`) | `valid`, `b2b` |
+| `test_b2b_orders.py` | `test_valid_tenant_delete_b2b_order` | Tenant deletes order from Pending Requests; verifies complete removal from table | `valid`, `b2b` |
+| `test_b2b_orders.py` | `test_invalid_b2b_creation_missing_required_fields` | Verifies clicking Next on empty B2B creation form is blocked by required field validation | `invalid`, `b2b` |
+| `test_b2b_orders.py` | `test_invalid_tenant_reject_without_reason` | Asserts Reject button remains disabled in Reject drawer when no reason is selected | `invalid`, `b2b` |
+| `test_b2b_orders.py` | `test_invalid_merchant_reject_without_remarks` | Asserts Reject button remains disabled in Merchant Reject drawer when remarks are empty | `invalid`, `b2b` |
+| `test_b2b_orders.py` | `test_edge_b2b_status_tab_cycling` | Cycles across all 6+ status tabs confirming stable table rendering and no crashes | `edge`, `b2b` |
+| `test_b2b_orders.py` | `test_edge_cancel_creation_form_preserves_list` | Opening B2B creation form and clicking Cancel safely returns to /orders/b2b with list intact | `edge`, `b2b` |

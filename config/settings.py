@@ -23,6 +23,9 @@ class Settings:
     MERCHANT_EMAIL: str = os.getenv("MERCHANT_EMAIL", "b2c@merchant.com")
     MERCHANT_PASSWORD: str = os.getenv("MERCHANT_PASSWORD", "123456789")
 
+    B2B_MERCHANT_EMAIL: str = os.getenv("B2B_MERCHANT_EMAIL", "B2B@merchant.com")
+    B2B_MERCHANT_PASSWORD: str = os.getenv("B2B_MERCHANT_PASSWORD", "12345678")
+
     DRIVER_EMAIL: str = os.getenv("DRIVER_EMAIL", "b2c@driver.com")
     DRIVER_PASSWORD: str = os.getenv("DRIVER_PASSWORD", "12345678")
 

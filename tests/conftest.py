@@ -16,6 +16,7 @@ from pages.sla_page import SlaPage
 from pages.reports_page import ReportsPage
 from pages.manifests_page import ManifestsPage
 from pages.tickets_page import TicketsPage
+from pages.b2b_orders_page import B2BOrdersPage
 
 @pytest.fixture(scope="session")
 def browser_type_launch_args(browser_type_launch_args: Dict[str, Any]):
@@ -157,6 +158,11 @@ def tickets_page(page: Page) -> TicketsPage:
     return TicketsPage(page)
 
 @pytest.fixture
+def b2b_orders_page(page: Page) -> B2BOrdersPage:
+    """Fixture to provide an initialized B2BOrdersPage instance."""
+    return B2BOrdersPage(page)
+
+@pytest.fixture
 def proof_file_path() -> str:
     """Path to the dummy proof asset for cash transfer submissions."""
     asset_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "assets", "dummy_proof.png"))
@@ -237,6 +243,22 @@ def authenticated_orders(page: Page, login_page: LoginPage, orders_page: OrdersP
     login_page.login(settings.TEST_USER_EMAIL, settings.TEST_USER_PASSWORD)
     orders_page.open()
     return orders_page
+
+@pytest.fixture
+def authenticated_b2b_admin(page: Page, login_page: LoginPage, b2b_orders_page: B2BOrdersPage) -> B2BOrdersPage:
+    """Fixture that completes admin login and opens B2B Orders management."""
+    login_page.open()
+    login_page.login(settings.TEST_USER_EMAIL, settings.TEST_USER_PASSWORD)
+    b2b_orders_page.open_admin_b2b()
+    return b2b_orders_page
+
+@pytest.fixture
+def authenticated_b2b_merchant(page: Page, login_page: LoginPage, b2b_orders_page: B2BOrdersPage) -> B2BOrdersPage:
+    """Fixture that completes B2B Merchant login and opens B2B Orders management."""
+    login_page.open()
+    login_page.login(settings.B2B_MERCHANT_EMAIL, settings.B2B_MERCHANT_PASSWORD)
+    b2b_orders_page.open_merchant_b2b()
+    return b2b_orders_page
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
